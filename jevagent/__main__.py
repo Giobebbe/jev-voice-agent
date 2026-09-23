@@ -52,6 +52,7 @@ def settings_from(args) -> Settings:
         s.mic = args.mic
     s.dry_run = getattr(args, "dry_run", False)
     s.speak = not getattr(args, "quiet", False)
+    s.fast_lane = not getattr(args, "no_fast", False)
     return s
 
 
@@ -80,6 +81,8 @@ async def cmd_run(args) -> int:
         except Exception:
             pass
     ui("info", "listening... (say 'goodbye' or press Ctrl+C to stop)")
+    if args.seconds:
+        asyncio.get_running_loop().call_later(args.seconds, agent.stt_stop.set)
     try:
         await agent.run(Scribe(s), source)
     except (KeyboardInterrupt, asyncio.CancelledError):
@@ -130,6 +133,8 @@ def main() -> int:
     r.add_argument("--dry-run", action="store_true", help="decide but do not act")
     r.add_argument("--quiet", action="store_true", help="no voice replies or chimes")
     r.add_argument("--audio", help="replay an audio file instead of the microphone")
+    r.add_argument("--seconds", type=float, help="stop after this many seconds")
+    r.add_argument("--no-fast", action="store_true", help="disable the on-device fast lane")
     t = sub.add_parser("text", help="decide one typed utterance")
     t.add_argument("utterance", nargs="+")
     sub.add_parser("devices", help="list microphones")

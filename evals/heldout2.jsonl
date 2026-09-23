@@ -1,0 +1,80 @@
+{"id": "k01", "kind": "apps", "say": "hey could you pull up the calculator for me", "expect": [{"tool": "open_app", "args": {"app": "Calculator"}}]}
+{"id": "k02", "kind": "apps", "say": "switch over to Slack please", "expect": [{"tool": "open_app", "args": {"app": "Slack"}}]}
+{"id": "k03", "kind": "apps", "say": "launch Apple Notes", "expect": [{"tool": "open_app", "args": {"app": "Notes"}}]}
+{"id": "k04", "kind": "apps", "say": "um open my notes", "expect": [{"tool": "open_app", "args": {"app": "Jev Notes"}}]}
+{"id": "k05", "kind": "apps", "say": "bring up the browser real quick", "expect": [{"tool": "open_app", "args": {"app": "Google Chrome"}}]}
+{"id": "k06", "kind": "apps", "say": "quit Telegram", "expect": [{"tool": "quit_app", "args": {"app": "Telegram"}}]}
+{"id": "k07", "kind": "apps", "say": "can you close Photo Booth for me", "expect": [{"tool": "quit_app", "args": {"app": "Photo Booth"}}]}
+{"id": "k08", "kind": "apps", "say": "go ahead and open Activity Monitor", "expect": [{"tool": "open_app", "args": {"app": "Activity Monitor"}}]}
+{"id": "k09", "kind": "apps", "say": "show me the weather app", "expect": [{"tool": "open_app", "args": {"app": "Weather"}}]}
+{"id": "k10", "kind": "apps", "say": "alright quit Keynote, I'm done with it", "expect": [{"tool": "quit_app", "args": {"app": "Keynote"}}]}
+{"id": "k11", "kind": "notes", "say": "start a new note called grocery run", "expect": [{"tool": "create_note", "args": {"title": "grocery run"}}]}
+{"id": "k12", "kind": "notes", "say": "make a new note", "expect": [{"tool": "create_note"}]}
+{"id": "k13", "kind": "notes", "say": "change the title to meeting recap", "expect": [{"tool": "set_note_title", "args": {"title": "meeting recap"}}], "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}}
+{"id": "k14", "kind": "notes", "say": "type buy more coffee filters", "expect": [{"tool": "write_in_note", "args": {"note_text": "buy more coffee filters"}}], "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}}
+{"id": "k15", "kind": "notes", "say": "write down call the dentist on Friday", "expect": [{"tool": "write_in_note", "args": {"note_text": "call the dentist on Friday"}}], "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}}
+{"id": "k16", "kind": "notes", "say": "retitle this note weekend plans", "expect": [{"tool": "set_note_title", "args": {"title": "weekend plans"}}], "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}}
+{"id": "k17", "kind": "notes", "say": "jot down that the demo went well", "expect": [{"tool": "write_in_note", "args": {"note_text": ["the demo went well", "that the demo went well"]}}], "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}}
+{"id": "k18", "kind": "web", "say": "google best pizza near me", "expect": [{"tool": "web_search", "args": {"query": "best pizza near me"}}]}
+{"id": "k19", "kind": "web", "say": "search the web for how tall is Mount Everest", "expect": [{"tool": "web_search", "args": {"query": "how tall is Mount Everest"}}]}
+{"id": "k20", "kind": "web", "say": "look up lo-fi beats on YouTube", "expect": [{"tool": "youtube_search", "args": {"query": "lo-fi beats"}}]}
+{"id": "k21", "kind": "web", "say": "search YouTube for how to tie a tie", "expect": [{"tool": "youtube_search", "args": {"query": "how to tie a tie"}}]}
+{"id": "k22", "kind": "web", "say": "go to github", "expect": [{"tool": "open_website", "args": {"site": "github.com"}}]}
+{"id": "k23", "kind": "web", "say": "take me to reddit", "expect": [{"tool": "open_website", "args": {"site": "reddit.com"}}]}
+{"id": "k24", "kind": "web", "say": "open figma dot com", "expect": [{"tool": "open_website", "args": {"site": "figma.com"}}]}
+{"id": "k25", "kind": "web", "say": "pull up my Gmail inbox", "expect": [{"tool": "open_website", "args": {"site": "gmail.com"}}]}
+{"id": "k26", "kind": "web", "say": "close this tab", "expect": [{"tool": "close_tab"}]}
+{"id": "k27", "kind": "web", "say": "open up Wikipedia", "expect": [{"tool": "open_website", "args": {"site": "wikipedia.org"}}]}
+{"id": "k28", "kind": "camera", "say": "take a picture of me", "expect": [{"tool": "take_photo"}]}
+{"id": "k29", "kind": "camera", "say": "snap a selfie", "expect": [{"tool": "take_photo"}]}
+{"id": "k30", "kind": "camera", "say": "grab a screenshot", "expect": [{"tool": "take_screenshot"}]}
+{"id": "k31", "kind": "camera", "say": "capture my screen please", "expect": [{"tool": "take_screenshot"}]}
+{"id": "k32", "kind": "camera", "say": "okay say cheese, take my photo", "expect": [{"tool": "take_photo"}]}
+{"id": "k33", "kind": "files", "say": "make a new folder called invoices", "expect": [{"tool": "create_folder", "args": {"name": "invoices"}}]}
+{"id": "k34", "kind": "files", "say": "create a file named todo.txt", "expect": [{"tool": "create_file", "args": {"name": "todo.txt"}}]}
+{"id": "k35", "kind": "files", "say": "delete the shopping list", "expect": [{"tool": "delete_item", "args": {"item": "shopping list.txt"}}], "files": true}
+{"id": "k36", "kind": "files", "say": "open the budget file", "expect": [{"tool": "open_item", "args": {"item": "Projects/budget.txt"}}], "files": true}
+{"id": "k37", "kind": "files", "say": "rename ideas to brainstorm", "expect": [{"tool": "rename_item", "args": {"item": "ideas.md", "name": ["brainstorm", "brainstorm.md"]}}], "files": true}
+{"id": "k38", "kind": "files", "say": "move hello.txt into Old stuff", "expect": [{"tool": "move_item", "args": {"item": "Notes/hello.txt", "dest": "Old stuff/"}}], "files": true}
+{"id": "k39", "kind": "files", "say": "move the photo out to the main folder", "expect": [{"tool": "move_item", "args": {"item": "Photos/Photo 1.jpg", "dest": "/"}}], "files": true}
+{"id": "k40", "kind": "files", "say": "show me the JEV folder", "expect": [{"tool": "show_folder"}], "files": true}
+{"id": "k41", "kind": "files", "say": "what's in my folder right now", "expect": [{"tool": "list_items"}], "files": true}
+{"id": "k42", "kind": "files", "say": "get rid of the old stuff folder", "expect": [{"tool": "delete_item", "args": {"item": "Old stuff/"}}], "files": true}
+{"id": "k43", "kind": "files", "say": "open ideas", "expect": [{"tool": "open_item", "args": {"item": "ideas.md"}}], "files": true}
+{"id": "k44", "kind": "files", "say": "put the budget in the Notes folder", "expect": [{"tool": "move_item", "args": {"item": "Projects/budget.txt", "dest": "Notes/"}}], "files": true}
+{"id": "k45", "kind": "system", "say": "turn the volume up a bit", "expect": [{"tool": "set_volume", "args": {"volume": "up"}}]}
+{"id": "k46", "kind": "system", "say": "mute the sound", "expect": [{"tool": "set_volume", "args": {"volume": "mute"}}]}
+{"id": "k47", "kind": "system", "say": "crank the volume all the way up", "expect": [{"tool": "set_volume", "args": {"volume": "max"}}]}
+{"id": "k48", "kind": "system", "say": "set the volume to half", "expect": [{"tool": "set_volume", "args": {"volume": "half"}}]}
+{"id": "k49", "kind": "system", "say": "switch to dark mode", "expect": [{"tool": "dark_mode", "args": {"mode": "on"}}]}
+{"id": "k50", "kind": "system", "say": "turn off dark mode", "expect": [{"tool": "dark_mode", "args": {"mode": "off"}}]}
+{"id": "k51", "kind": "system", "say": "what time is it", "expect": [{"tool": "tell_time"}]}
+{"id": "k52", "kind": "system", "say": "okay that's all, stop listening", "expect": [{"tool": "stop_listening"}]}
+{"id": "k53", "kind": "negative", "say": "I always forget to mute my mic on calls", "expect": []}
+{"id": "k54", "kind": "negative", "say": "last time I searched for this it took ages", "expect": []}
+{"id": "k55", "kind": "negative", "say": "you could also create a folder for each client", "expect": []}
+{"id": "k56", "kind": "negative", "say": "yesterday I opened Safari and it crashed right away", "expect": []}
+{"id": "k57", "kind": "negative", "say": "so as you can see, it just took the photo on its own", "expect": []}
+{"id": "k58", "kind": "negative", "say": "if I wanted to I could delete the whole folder", "expect": []}
+{"id": "k59", "kind": "negative", "say": "wow that was fast", "expect": []}
+{"id": "k60", "kind": "negative", "say": "Chrome is honestly my favorite browser", "expect": []}
+{"id": "k61", "kind": "negative", "say": "do you think dark mode is actually better for your eyes", "expect": []}
+{"id": "k62", "kind": "negative", "say": "thanks, that's perfect", "expect": []}
+{"id": "k63", "kind": "negative", "say": "I should really start taking more screenshots for my tutorials", "expect": []}
+{"id": "k64", "kind": "negative", "say": "my friend keeps telling me to rename all my files but I never do", "expect": []}
+{"id": "k65", "kind": "negative", "say": "the calculator app on the Mac hasn't changed in years", "expect": []}
+{"id": "k66", "kind": "negative", "say": "what I'd recommend is you open Notion and make a page for every project", "expect": []}
+{"id": "k67", "kind": "compound", "say": "open Safari and search for flights to Lisbon", "expect": [{"tool": "open_app", "args": {"app": "Safari"}}, {"tool": "web_search", "args": {"query": "flights to Lisbon"}}]}
+{"id": "k68", "kind": "compound", "say": "create a note called packing list and write passport and charger", "expect": [{"tool": "create_note", "args": {"title": "packing list"}}, {"tool": "write_in_note", "args": {"note_text": "passport and charger"}}]}
+{"id": "k69", "kind": "compound", "say": "search YouTube for salt and pepper squid recipe", "expect": [{"tool": "youtube_search", "args": {"query": "salt and pepper squid recipe"}}]}
+{"id": "k70", "kind": "compound", "say": "take a screenshot and then turn the volume down", "expect": [{"tool": "take_screenshot"}, {"tool": "set_volume", "args": {"volume": "down"}}]}
+{"id": "k71", "kind": "compound", "say": "make a folder called research and development", "expect": [{"tool": "create_folder", "args": {"name": "research and development"}}]}
+{"id": "k72", "kind": "compound", "say": "quit Music and open Calendar", "expect": [{"tool": "quit_app", "args": {"app": "Music"}}, {"tool": "open_app", "args": {"app": "Calendar"}}]}
+{"id": "k73", "kind": "partial", "say": "can you open up the", "expect": [], "partial": true}
+{"id": "k74", "kind": "partial", "say": "search YouTube for", "expect": [], "partial": true}
+{"id": "k75", "kind": "partial", "say": "rename ideas to", "expect": [], "files": true, "partial": true}
+{"id": "k76", "kind": "partial", "say": "move the budget file into", "expect": [], "files": true, "partial": true}
+{"id": "k77", "kind": "partial", "say": "okay write down", "expect": [], "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}, "partial": true}
+{"id": "k78", "kind": "partial", "say": "take me to", "expect": [], "partial": true}
+{"id": "k79", "kind": "partial", "say": "okay open the calculator", "expect": [{"tool": "open_app", "args": {"app": "Calculator"}}], "partial": true}
+{"id": "k80", "kind": "partial", "say": "alright go ahead and quit Slack", "expect": [{"tool": "quit_app", "args": {"app": "Slack"}}], "partial": true}

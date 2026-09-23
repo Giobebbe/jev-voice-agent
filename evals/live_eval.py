@@ -20,6 +20,7 @@ import argparse
 import asyncio
 import datetime as dt
 import json
+import re
 import subprocess
 import sys
 import threading
@@ -182,7 +183,8 @@ async def main() -> int:
                               capture_output=True, text=True).stdout.split()[-3::2]
         yavg = subprocess.run(["/opt/homebrew/bin/ffmpeg", "-hide_banner", "-i", str(photos[-1]), "-vf",
                                "signalstats,metadata=print:key=lavfi.signalstats.YAVG", "-f", "null", "-"],
-                              capture_output=True, text=True).stderr.rsplit("YAVG=", 1)[-1].split()[0]
+                              capture_output=True, text=True).stderr
+        yavg = (re.findall(r"YAVG=([\d.]+)", yavg) or ["?"])[-1]
         checks.append(check("photo captured into the sandbox", dims == ["1280", "720"] and size > 3_000,
                             f"{photos[-1].name} {size} bytes {dims} brightness {yavg} (16 = dark room)"))
     else:
