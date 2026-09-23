@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+runs/
+audio_cache/
+scratch/
+evals/audio/
+evals/results/
+.DS_Store
+# third-party docs mirrored locally for reference, not redistributed
+docs/typesafe/
+docs/elevenlabs/
