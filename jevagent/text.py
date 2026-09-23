@@ -23,7 +23,10 @@ FILLERS = {
 
 
 def normalize(text: str) -> str:
-    return re.sub(r"\s+", " ", text or "").strip()
+    """Collapse whitespace and drop double quotes: Scribe quotes names ('"Mission Plan."'),
+    and an unbalanced quote makes a clause look unfinished."""
+    text = re.sub(r"[\"“”]", "", text or "")
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def sentences(text: str) -> list[str]:
@@ -139,3 +142,13 @@ def domains(text: str) -> list[str]:
         if d not in out:
             out.append(d)
     return out
+
+
+def names_item(clause: str, item: str | None) -> bool:
+    """Does the clause literally name this file or folder (every word of its stem)?"""
+    if not item:
+        return False
+    stem = item.rstrip("/").split("/")[-1].rsplit(".", 1)[0]
+    words = {w.lower() for w in re.findall(r"[\w']+", stem)}
+    said = {w.lower() for w in re.findall(r"[\w']+", clause)}
+    return bool(words) and words <= said

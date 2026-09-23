@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from . import text as T
 from .brain import Brain, Decision
 from .config import Settings
 from .executor import Executor
@@ -29,6 +30,7 @@ from .spec import NONE
 
 DUP_WINDOW_S = 4.0
 CARRY_S = 2.5  # how long an unfinished command waits for the rest
+ADDRESSED = 0.5  # Jev: is this said TO the computer, now?
 CUT_OFF = 0.7  # Jev's 'unfinished phrase' probability above which we wait
 WHAT = {"app": "which app", "item": "which file", "query": "what to search", "site": "which website",
         "name": "the name", "title": "the title", "note_text": "what to write", "dest": "which folder",
@@ -135,7 +137,7 @@ class Agent:
     # -- policy ------------------------------------------------------------------------
     def should_fire(self, seg: int, idx: int, d: Decision, closed: bool, final: bool) -> str:
         """'fire', 'carry' (wait for the next segment) or '' (wait)."""
-        if d.tool == NONE:
+        if d.tool == NONE or d.addressed < ADDRESSED:
             return ""
         spec = d.spec
         if d.missing() or d.cut_off >= CUT_OFF:
@@ -145,8 +147,11 @@ class Agent:
         if closed:
             if d.tool_p < self.s.tool_min or d.confidence() < self.s.arg_min:
                 return ""
-            if spec.final_only and d.confidence() < self.s.delete_arg_min:
-                return "carry"
+            if "item" in spec.args:
+                item = d.args["item"]
+                need = self.s.arg_min if T.names_item(d.clause, item.value) else self.s.item_min
+                if item.p < need:
+                    return "carry" if final else ""
             return "fire"
         if spec.early and d.tool_p >= self.s.early_tool_min and d.confidence() >= self.s.early_arg_min:
             stable = self._seen.get((seg, idx)) == d.key()

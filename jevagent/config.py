@@ -53,7 +53,7 @@ class Settings:
     arg_min: float = 0.5
     early_tool_min: float = 0.9
     early_arg_min: float = 0.85
-    delete_arg_min: float = 0.8
+    item_min: float = 0.9  # existing file/folder picked by Jev: act only when clearly meant
     quiet_ms: int = 300
     scribe_lag_s: float = 0.6  # a Scribe partial covers the audio up to ~this long before it
     vad_silence_secs: float = 0.5

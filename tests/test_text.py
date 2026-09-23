@@ -35,3 +35,10 @@ def test_domains():
     assert T.domains("open up X.com please") == ["x.com"]
     assert T.domains("go to x dot com") == ["x.com"]
     assert T.domains("open github.com and news.ycombinator.com") == ["github.com", "news.ycombinator.com"]
+
+
+def test_names_item():
+    assert T.names_item("move the shopping list into notes", "shopping list.txt")
+    assert T.names_item("delete project artemis", "Project Artemis/")
+    assert not T.names_item("move the mission plan into project apollo", "Notes/Untitled.txt")
+    assert not T.names_item("anything", None)

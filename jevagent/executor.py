@@ -15,9 +15,11 @@ from pathlib import Path
 
 from .brain import Decision
 from .config import PROTECTED_APPS, Settings
+from .notes_app import notes_app
 from .sandbox import Sandbox, SandboxError
 
 FFMPEG = "/opt/homebrew/bin/ffmpeg"
+NOTES_APP = "Jev Notes"
 
 
 @dataclass
@@ -67,6 +69,7 @@ class Executor:
         self.s = settings
         self.sb = sandbox
         self.desk = DeskState()
+        self.notes = notes_app(sandbox.root / "Notes", settings.browser)
         self.log: list[tuple[str, str]] = []  # (call, outcome) -- what evals read
 
     def items(self) -> list[str]:
@@ -101,7 +104,7 @@ class Executor:
             self.desk.front_app = self.s.browser
             self.desk.page = {"web_search": "google.com", "youtube_search": "youtube.com"}.get(d.tool, a.get("site", ""))
         elif d.tool == "create_note":
-            self.desk.front_app = "TextEdit"
+            self.desk.front_app = NOTES_APP
             self.desk.current_note = f"Notes/{a.get('title') or 'Untitled'}.txt"
         elif d.tool == "take_photo":
             self.desk.front_app = "Preview"
@@ -113,6 +116,10 @@ class Executor:
 
     def do_open_app(self, d: Decision) -> Result:
         app = d.args["app"].value
+        if app == NOTES_APP:
+            self.notes.show()
+            self.desk.front_app = NOTES_APP
+            return Result(True, detail=app)
         out = _run(["open", "-a", app])
         if out.returncode != 0:
             return Result(False, f"I couldn't open {app}.", out.stderr.strip())
@@ -123,16 +130,15 @@ class Executor:
         app = d.args["app"].value
         if app in PROTECTED_APPS:
             return Result(False, f"I'll leave {app} open.", "protected app")
+        if app == NOTES_APP:
+            self.notes.hide()
+            return Result(True, detail=app)
         osascript(f"tell application {_as_str(app)} to quit")
         if self.desk.front_app == app:
             self.desk.front_app = ""
         return Result(True, detail=app)
 
-    # -- notes: text files in <root>/Notes, shown in TextEdit --------------------------
-    def _open_in_textedit(self, path: Path) -> None:
-        _run(["open", "-a", "TextEdit", str(path)])
-        self.desk.front_app = "TextEdit"
-
+    # -- notes: text files in <root>/Notes, shown live by Jev Notes ---------------------
     def _note_path(self) -> Path | None:
         if not self.desk.current_note:
             return None
@@ -142,52 +148,32 @@ class Executor:
             return None
         return p if p.exists() else None
 
-    def _textedit_sync(self, path: Path, content: str) -> None:
-        """Update the note: through TextEdit when it is open there (so the window changes
-        live and TextEdit does not see a foreign edit), otherwise on disk and then open it."""
-        script = f'''
-        if application "TextEdit" is running then
-            tell application "TextEdit"
-                repeat with doc in documents
-                    try
-                        if (path of doc) is {_as_str(str(path))} then
-                            set text of doc to {_as_str(content)}
-                            save doc
-                            activate
-                            return "yes"
-                        end if
-                    end try
-                end repeat
-            end tell
-        end if
-        return "no"'''
-        if osascript(script) != "yes":
-            path.write_text(content, encoding="utf-8")
-            self._open_in_textedit(path)
+    def _show_note(self, path: Path) -> None:
+        self.desk.current_note = self.sb.rel(path)
+        self.notes.current = path
+        self.notes.show()
+        self.desk.front_app = NOTES_APP
 
     def do_create_note(self, d: Decision) -> Result:
         title = d.args["title"].value if not d.args["title"].omitted else ""
         self.sb.ensure_dir("Notes")
         path = self.sb.create_file(title or "Untitled", text=(title + "\n\n") if title else "", parent_rel="Notes")
-        self.desk.current_note = self.sb.rel(path)
-        self._open_in_textedit(path)
+        self._show_note(path)
         return Result(True, detail=self.desk.current_note)
 
     def do_set_note_title(self, d: Decision) -> Result:
         title = d.args["title"].value
         path = self._note_path()
         if path is None:
-            self.do_create_note(d)
-            return Result(True, detail=f"new note {self.desk.current_note}")
+            return self.do_create_note(d)
         # A note is "title, blank line, body"; an Untitled note has no title line yet.
         old = path.read_text(encoding="utf-8")
         lines = old.split("\n")
         has_title = not path.stem.startswith("Untitled") and bool(lines[0].strip())
         body = ("\n".join(lines[1:]) if has_title else old).strip("\n")
-        self._textedit_sync(path, title + "\n\n" + (body + "\n" if body else ""))
-        # Keep the file name in step with the title (TextEdit follows the rename).
+        self.sb.write_file(self.sb.rel(path), title + "\n\n" + (body + "\n" if body else ""))
         new = self.sb.rename(self.sb.rel(path), title)
-        self.desk.current_note = self.sb.rel(new)
+        self._show_note(new)
         return Result(True, detail=self.desk.current_note)
 
     def do_write_in_note(self, d: Decision) -> Result:
@@ -196,10 +182,10 @@ class Executor:
         if path is None:
             self.sb.ensure_dir("Notes")
             path = self.sb.create_file("Untitled", parent_rel="Notes")
-            self.desk.current_note = self.sb.rel(path)
         content = path.read_text(encoding="utf-8")
         content = (content.rstrip("\n") + "\n" + text + "\n") if content.strip() else text + "\n"
-        self._textedit_sync(path, content)
+        self.sb.write_file(self.sb.rel(path), content)
+        self._show_note(path)
         return Result(True, detail=self.desk.current_note)
 
     # -- web -----------------------------------------------------------------------------
@@ -239,9 +225,9 @@ class Executor:
         self.sb.path(self.sb.rel(target))
         # Grab ~1.2 s so auto-exposure settles, keep the last frame.
         out = _run([FFMPEG, "-hide_banner", "-loglevel", "error", "-f", "avfoundation", "-framerate", "30",
-                    "-video_size", "1280x720", "-i", f"{self.s.camera}:none", "-t", "1.2",
+                    "-video_size", "1280x720", "-pixel_format", "nv12", "-i", f"{self.s.camera}:none", "-t", "1.2",
                     "-update", "1", "-q:v", "2", "-y", str(target)], timeout=15)
-        if out.returncode != 0 or not target.exists() or target.stat().st_size < 10_000:
+        if out.returncode != 0 or not target.exists() or target.stat().st_size < 3_000:
             return Result(False, "I couldn't use the camera.", out.stderr.strip()[-300:])
         _run(["open", "-a", "Preview", str(target)])
         self.desk.front_app = "Preview"

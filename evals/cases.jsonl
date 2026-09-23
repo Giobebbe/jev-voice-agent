@@ -1,6 +1,6 @@
-{"id": "v01", "kind": "video", "say": "All right, can you open up the notes app for me?", "expect": [{"tool": "open_app", "args": {"app": "Notes"}}]}
-{"id": "v02", "kind": "video", "say": "And once you're there, can you create a new note?", "ctx": {"front_app": "Notes"}, "expect": [{"tool": "create_note"}]}
-{"id": "v03", "kind": "video", "say": "And inside this new note, let's make the title say, hello.", "ctx": {"front_app": "TextEdit", "current_note": "Untitled.txt"}, "expect": [{"tool": "set_note_title", "args": {"title": "hello"}}]}
+{"id": "v01", "kind": "video", "say": "All right, can you open up the notes app for me?", "expect": [{"tool": "open_app", "args": {"app": "Jev Notes"}}]}
+{"id": "v02", "kind": "video", "say": "And once you're there, can you create a new note?", "ctx": {"front_app": "Jev Notes"}, "expect": [{"tool": "create_note"}]}
+{"id": "v03", "kind": "video", "say": "And inside this new note, let's make the title say, hello.", "ctx": {"front_app": "Jev Notes", "current_note": "Untitled.txt"}, "expect": [{"tool": "set_note_title", "args": {"title": "hello"}}]}
 {"id": "v04", "kind": "negative", "say": "Great, great.", "expect": []}
 {"id": "v05", "kind": "video", "say": "Okay, let's move on and can you open up the ARC browser?", "expect": [{"tool": "open_app", "args": {"app": "Google Chrome"}}]}
 {"id": "v06", "kind": "video", "say": "And once you're there, can you Google search Norbert Wiener?", "ctx": {"front_app": "Google Chrome"}, "expect": [{"tool": "web_search", "args": {"query": "Norbert Wiener"}}]}
@@ -25,11 +25,11 @@
 {"id": "a14", "kind": "apps", "say": "Kill the browser", "expect": [{"tool": "quit_app", "args": {"app": "Google Chrome"}}]}
 {"id": "n01", "kind": "notes", "say": "Make a new note called shopping list", "expect": [{"tool": "create_note", "args": {"title": "shopping list"}}]}
 {"id": "n02", "kind": "notes", "say": "Start a new note", "expect": [{"tool": "create_note"}]}
-{"id": "n03", "kind": "notes", "say": "Change the title to meeting ideas", "ctx": {"front_app": "TextEdit", "current_note": "hello.txt"}, "expect": [{"tool": "set_note_title", "args": {"title": "meeting ideas"}}]}
-{"id": "n04", "kind": "notes", "say": "Write buy milk and eggs", "ctx": {"front_app": "TextEdit", "current_note": "shopping list.txt"}, "expect": [{"tool": "write_in_note", "args": {"note_text": "buy milk and eggs"}}]}
-{"id": "n05", "kind": "notes", "say": "Add a line that says call mom tomorrow", "ctx": {"front_app": "TextEdit", "current_note": "hello.txt"}, "expect": [{"tool": "write_in_note", "args": {"note_text": ["call mom tomorrow"]}}]}
-{"id": "n06", "kind": "notes", "say": "Type hello world in the note", "ctx": {"front_app": "TextEdit", "current_note": "hello.txt"}, "expect": [{"tool": "write_in_note", "args": {"note_text": "hello world"}}]}
-{"id": "n07", "kind": "notes", "say": "Title it Jev demo", "ctx": {"front_app": "TextEdit", "current_note": "Untitled.txt"}, "expect": [{"tool": "set_note_title", "args": {"title": "Jev demo"}}]}
+{"id": "n03", "kind": "notes", "say": "Change the title to meeting ideas", "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}, "expect": [{"tool": "set_note_title", "args": {"title": "meeting ideas"}}]}
+{"id": "n04", "kind": "notes", "say": "Write buy milk and eggs", "ctx": {"front_app": "Jev Notes", "current_note": "shopping list.txt"}, "expect": [{"tool": "write_in_note", "args": {"note_text": "buy milk and eggs"}}]}
+{"id": "n05", "kind": "notes", "say": "Add a line that says call mom tomorrow", "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}, "expect": [{"tool": "write_in_note", "args": {"note_text": ["call mom tomorrow"]}}]}
+{"id": "n06", "kind": "notes", "say": "Type hello world in the note", "ctx": {"front_app": "Jev Notes", "current_note": "hello.txt"}, "expect": [{"tool": "write_in_note", "args": {"note_text": "hello world"}}]}
+{"id": "n07", "kind": "notes", "say": "Title it Jev demo", "ctx": {"front_app": "Jev Notes", "current_note": "Untitled.txt"}, "expect": [{"tool": "set_note_title", "args": {"title": "Jev demo"}}]}
 {"id": "w01", "kind": "web", "say": "Google the weather in Milan", "expect": [{"tool": "web_search", "args": {"query": ["the weather in Milan", "weather in Milan"]}}]}
 {"id": "w02", "kind": "web", "say": "Search for the best pizza in Naples", "expect": [{"tool": "web_search", "args": {"query": ["the best pizza in Naples", "best pizza in Naples"]}}]}
 {"id": "w03", "kind": "web", "say": "Look up Alan Turing", "expect": [{"tool": "web_search", "args": {"query": "Alan Turing"}}]}
@@ -82,7 +82,7 @@
 {"id": "x08", "kind": "negative", "say": "Yesterday I opened Safari and it crashed.", "expect": []}
 {"id": "x09", "kind": "negative", "say": "My friend takes a lot of screenshots.", "expect": []}
 {"id": "x10", "kind": "negative", "say": "Alright, so what should we try next?", "expect": []}
-{"id": "m01", "kind": "compound", "say": "Open the notes app and create a new note", "expect": [{"tool": "open_app", "args": {"app": "Notes"}}, {"tool": "create_note"}]}
+{"id": "m01", "kind": "compound", "say": "Open the notes app and create a new note", "expect": [{"tool": "open_app", "args": {"app": "Jev Notes"}}, {"tool": "create_note"}]}
 {"id": "m02", "kind": "compound", "say": "Open Chrome and search for Italian recipes", "expect": [{"tool": "open_app", "args": {"app": "Google Chrome"}}, {"tool": "web_search", "args": {"query": "Italian recipes"}}]}
 {"id": "m03", "kind": "compound", "say": "Search for salt and pepper chips", "expect": [{"tool": "web_search", "args": {"query": "salt and pepper chips"}}]}
 {"id": "m04", "kind": "compound", "say": "Create a folder called rock and roll", "expect": [{"tool": "create_folder", "args": {"name": "rock and roll"}}]}
@@ -93,7 +93,7 @@
 {"id": "p02", "kind": "prefix", "say": "and once you're there can you", "expect": [], "partial": true}
 {"id": "p03", "kind": "prefix", "say": "can you google search", "expect": [], "partial": true}
 {"id": "p04", "kind": "prefix", "say": "delete the", "expect": [], "partial": true, "files": true}
-{"id": "p05", "kind": "prefix", "say": "let's make the title say", "expect": [], "partial": true, "ctx": {"front_app": "TextEdit", "current_note": "Untitled.txt"}}
-{"id": "p06", "kind": "prefix-early", "say": "can you open up the notes app", "expect": [{"tool": "open_app", "args": {"app": "Notes"}}], "partial": true}
+{"id": "p05", "kind": "prefix", "say": "let's make the title say", "expect": [], "partial": true, "ctx": {"front_app": "Jev Notes", "current_note": "Untitled.txt"}}
+{"id": "p06", "kind": "prefix-early", "say": "can you open up the notes app", "expect": [{"tool": "open_app", "args": {"app": "Jev Notes"}}], "partial": true}
 {"id": "p07", "kind": "prefix-early", "say": "now can you open up x.com", "expect": [{"tool": "open_website", "args": {"site": "x.com"}}], "partial": true}
 {"id": "p08", "kind": "prefix-early", "say": "okay now can you open up the photo booth", "expect": [{"tool": "open_app", "args": {"app": "Photo Booth"}}], "partial": true}

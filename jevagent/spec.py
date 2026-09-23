@@ -26,9 +26,9 @@ TOOLS: dict[str, Tool] = {t.name: t for t in [
     Tool(NONE, "No request for the computer: small talk, thanks, praise, reactions like 'great' or 'nice', "
                "filler, talking to someone else, or a fragment that does not yet say what to do"),
     Tool("open_app", "Open, launch or switch to an application installed on this Mac (a web browser like Chrome, "
-                     "Safari or Arc, or Photo Booth, TextEdit, Finder, Calculator...)", ("app",), early=True),
+                     "Safari or Arc, the notes app, Photo Booth, TextEdit, Finder, Calculator...)", ("app",), early=True),
     Tool("quit_app", "Close, quit or exit an application", ("app",)),
-    Tool("create_note", "Create a new note or a new text document to write in", optional=("title",)),
+    Tool("create_note", "Create a new note in the notes app", optional=("title",)),
     Tool("set_note_title", "Give the current note a title, or change what its title says", ("title",)),
     Tool("write_in_note", "Write, add or type some text into the current note", ("note_text",)),
     Tool("web_search", "Search the web or Google for something", ("query",)),
@@ -60,8 +60,10 @@ APP_HINTS: dict[str, str] = {
                      "or names a browser that is not installed such as Arc",
     "Safari": "Safari web browser, only when the user says Safari",
     "Photo Booth": "Photo Booth, the camera and selfie app",
-    "TextEdit": "TextEdit, the text editor where notes are written",
-    "Notes": "Apple Notes app",
+    "Jev Notes": "the notes app, where notes are written; use it whenever the user says 'the notes app', "
+                 "'notes' or 'my notes' without saying Apple",
+    "TextEdit": "TextEdit, the plain text editor",
+    "Notes": "Apple Notes, only when the user explicitly says 'Apple Notes'",
     "Finder": "Finder, the file browser",
     "System Settings": "System Settings or System Preferences",
     "Calculator": "Calculator",

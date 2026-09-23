@@ -39,6 +39,7 @@ class Decision:
     tool_p: float
     args: dict[str, Arg] = field(default_factory=dict)
     cut_off: float = 0.0
+    addressed: float = 1.0
     latency_ms: float = 0.0
     runner_up: tuple[str, float] = ("", 0.0)
 
@@ -79,6 +80,7 @@ def installed_apps() -> list[str]:
         if p.exists():
             names.update(c.stem for c in p.glob("*.app"))
     names.add("Finder")  # lives in CoreServices
+    names.add("Jev Notes")  # the agent's own notes window (jevagent/notes_app.py)
     return sorted(names)
 
 
@@ -162,6 +164,12 @@ class Brain:
                 "instructions": TOOL_QUESTION,
                 "criteria": {name: t.description for name, t in TOOLS.items()},
             },
+            "addressed": {
+                "type": "noul",
+                "instructions": "Is the user telling the computer to do something right now in `command`, "
+                                "rather than describing, explaining to an audience, suggesting what someone "
+                                "could do, or talking about the past?",
+            },
             "cut_off": {
                 "type": "noul",
                 "instructions": "Is the last phrase of `command` unfinished, so that more words are clearly "
@@ -241,10 +249,17 @@ class Brain:
                 continue
             choice = a["choice"]
             p = a["probabilities"].get(choice, 0.0)
+            if name in SPAN_QUESTIONS and choice != ABSENT:
+                # Nested spans ("moving to Berlin" / "moving to Berlin in it") are the same
+                # answer with a different boundary: count their mass as agreement.
+                core = choice.lower()
+                p = min(1.0, sum(q for c, q in a["probabilities"].items()
+                                 if c != ABSENT and (core in c.lower() or c.lower() in core)))
             absent = choice in (ABSENT, NOT_INSTALLED)
             args[name] = Arg(None if absent else choice, p, omitted=absent)
         return Decision(clause=clause, tool=tool, tool_p=tool_p, args=args,
-                        cut_off=answers["cut_off"]["noul"], latency_ms=ms, runner_up=runner)
+                        cut_off=answers["cut_off"]["noul"], addressed=answers["addressed"]["noul"],
+                        latency_ms=ms, runner_up=runner)
 
     async def decide_segment(self, segment: str, context: dict | None = None,
                              items: list[str] | None = None, folders: list[str] | None = None) -> list[Decision]:

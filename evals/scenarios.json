@@ -17,7 +17,7 @@
             {
               "tool": "open_app",
               "args": {
-                "app": "Notes"
+                "app": "Jev Notes"
               }
             }
           ]
@@ -118,7 +118,7 @@
             {
               "tool": "open_app",
               "args": {
-                "app": "Notes"
+                "app": "Jev Notes"
               }
             },
             {
