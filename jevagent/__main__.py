@@ -106,7 +106,7 @@ async def cmd_text(args) -> int:
     total = (time.perf_counter() - t) * 1000
     for d in ds:
         print(f"[{d.clause}] -> {d.call()}  tool_p={d.tool_p:.2f} conf={d.confidence():.2f} "
-              f"finished={d.finished:.2f} jev={d.latency_ms:.0f}ms")
+              f"cut_off={d.cut_off:.2f} jev={d.latency_ms:.0f}ms")
     print(f"total {total:.0f}ms")
     await brain.close()
     return 0

@@ -1,0 +1,302 @@
+{
+  "_doc": "Spoken scenarios for evals/audio_eval.py. Each utterance is synthesized with the scenario voice, joined with pauses, streamed at real-time pace. expect = ordered actions for that utterance.",
+  "voices": {
+    "roger": "CwhRBWXzGAHq8TQ4Fs17",
+    "sarah": "EXAVITQu4vr4xnSDxMaL",
+    "george": "JBFqnCBsd6RMkjVDRZzb",
+    "liam": "TX3LPaxmHKxFdv7VOQHJ"
+  },
+  "scenarios": [
+    {
+      "id": "video_replica",
+      "voice": "roger",
+      "utterances": [
+        {
+          "say": "All right, can you open up the notes app for me?",
+          "expect": [
+            {
+              "tool": "open_app",
+              "args": {
+                "app": "Notes"
+              }
+            }
+          ]
+        },
+        {
+          "say": "And once you're there, can you create a new note?",
+          "expect": [
+            {
+              "tool": "create_note"
+            }
+          ]
+        },
+        {
+          "say": "And inside this new note, let's make the title say, hello.",
+          "expect": [
+            {
+              "tool": "set_note_title",
+              "args": {
+                "title": "hello"
+              }
+            }
+          ]
+        },
+        {
+          "say": "Great, great.",
+          "expect": []
+        },
+        {
+          "say": "Okay, let's move on and can you open up the Arc browser?",
+          "expect": [
+            {
+              "tool": "open_app",
+              "args": {
+                "app": "Google Chrome"
+              }
+            }
+          ]
+        },
+        {
+          "say": "And once you're there, can you Google search Norbert Wiener?",
+          "expect": [
+            {
+              "tool": "web_search",
+              "args": {
+                "query": "Norbert Wiener"
+              }
+            }
+          ]
+        },
+        {
+          "say": "Now can you open up X dot com?",
+          "expect": [
+            {
+              "tool": "open_website",
+              "args": {
+                "site": "x.com"
+              }
+            }
+          ]
+        },
+        {
+          "say": "Nice, nice.",
+          "expect": []
+        },
+        {
+          "say": "Okay, now can you open up the photo booth?",
+          "expect": [
+            {
+              "tool": "open_app",
+              "args": {
+                "app": "Photo Booth"
+              }
+            }
+          ]
+        },
+        {
+          "say": "And let's take a picture of me.",
+          "expect": [
+            {
+              "tool": "take_photo"
+            }
+          ]
+        },
+        {
+          "say": "Cool, awesome, thank you.",
+          "expect": []
+        }
+      ]
+    },
+    {
+      "id": "early_trigger",
+      "voice": "sarah",
+      "_doc": "The app must open while the sentence is still going on.",
+      "utterances": [
+        {
+          "say": "Open the notes app and create a new note for my groceries.",
+          "expect": [
+            {
+              "tool": "open_app",
+              "args": {
+                "app": "Notes"
+              }
+            },
+            {
+              "tool": "create_note"
+            }
+          ]
+        },
+        {
+          "say": "Okay now open Photo Booth because I want to take a picture of myself.",
+          "expect": [
+            {
+              "tool": "open_app",
+              "args": {
+                "app": "Photo Booth"
+              }
+            }
+          ]
+        },
+        {
+          "say": "Go to YouTube and search for lo-fi music to study to.",
+          "expect": [
+            {
+              "tool": "open_website",
+              "args": {
+                "site": "youtube.com"
+              }
+            },
+            {
+              "tool": "youtube_search"
+            }
+          ]
+        },
+        {
+          "say": "Open the calculator, I need to do some quick math.",
+          "expect": [
+            {
+              "tool": "open_app",
+              "args": {
+                "app": "Calculator"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "files",
+      "voice": "george",
+      "utterances": [
+        {
+          "say": "Create a folder called Project Apollo.",
+          "expect": [
+            {
+              "tool": "create_folder",
+              "args": {
+                "name": "Project Apollo"
+              }
+            }
+          ]
+        },
+        {
+          "say": "Now make a text file named mission plan.",
+          "expect": [
+            {
+              "tool": "create_file",
+              "args": {
+                "name": "mission plan"
+              }
+            }
+          ]
+        },
+        {
+          "say": "Move the mission plan into Project Apollo.",
+          "expect": [
+            {
+              "tool": "move_item"
+            }
+          ]
+        },
+        {
+          "say": "Rename Project Apollo to Project Artemis.",
+          "expect": [
+            {
+              "tool": "rename_item"
+            }
+          ]
+        },
+        {
+          "say": "What's in the folder?",
+          "expect": [
+            {
+              "tool": "list_items"
+            }
+          ]
+        },
+        {
+          "say": "Delete Project Artemis.",
+          "expect": [
+            {
+              "tool": "delete_item"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "notes_and_web",
+      "voice": "liam",
+      "utterances": [
+        {
+          "say": "Start a new note called ideas for the video.",
+          "expect": [
+            {
+              "tool": "create_note",
+              "args": {
+                "title": [
+                  "ideas for the video"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "say": "Write, test the voice agent with Jev.",
+          "expect": [
+            {
+              "tool": "write_in_note"
+            }
+          ]
+        },
+        {
+          "say": "Hmm, let me think for a second.",
+          "expect": []
+        },
+        {
+          "say": "Search YouTube for Andrej Karpathy.",
+          "expect": [
+            {
+              "tool": "youtube_search",
+              "args": {
+                "query": "Andrej Karpathy"
+              }
+            }
+          ]
+        },
+        {
+          "say": "Close this tab.",
+          "expect": [
+            {
+              "tool": "close_tab"
+            }
+          ]
+        },
+        {
+          "say": "Take a screenshot.",
+          "expect": [
+            {
+              "tool": "take_screenshot"
+            }
+          ]
+        },
+        {
+          "say": "What time is it?",
+          "expect": [
+            {
+              "tool": "tell_time"
+            }
+          ]
+        },
+        {
+          "say": "That's amazing, thanks. Goodbye!",
+          "expect": [
+            {
+              "tool": "stop_listening"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

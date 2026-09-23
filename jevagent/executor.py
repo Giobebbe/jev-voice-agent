@@ -33,6 +33,7 @@ class DeskState:
     """What the agent knows about the desktop, sent to Jev as context."""
     front_app: str = ""
     current_note: str = ""  # path relative to the sandbox root
+    page: str = ""  # site open in the browser, e.g. youtube.com
     history: list[str] = field(default_factory=list)
 
     def context(self) -> dict:
@@ -41,6 +42,8 @@ class DeskState:
             ctx["front_app"] = self.front_app
         if self.current_note:
             ctx["current_note"] = Path(self.current_note).name
+        if self.page and self.front_app in ("Google Chrome", "Safari"):
+            ctx["browser_page"] = self.page
         return ctx
 
 
@@ -96,6 +99,7 @@ class Executor:
             self.desk.front_app = a.get("app", "")
         elif d.tool in ("web_search", "youtube_search", "open_website"):
             self.desk.front_app = self.s.browser
+            self.desk.page = {"web_search": "google.com", "youtube_search": "youtube.com"}.get(d.tool, a.get("site", ""))
         elif d.tool == "create_note":
             self.desk.front_app = "TextEdit"
             self.desk.current_note = f"Notes/{a.get('title') or 'Untitled'}.txt"
@@ -202,6 +206,8 @@ class Executor:
     def _open_url(self, url: str) -> None:
         _run(["open", "-a", self.s.browser, url])
         self.desk.front_app = self.s.browser
+        host = urllib.parse.urlparse(url).netloc
+        self.desk.page = host[4:] if host.startswith("www.") else host
 
     def do_web_search(self, d: Decision) -> Result:
         q = d.args["query"].value

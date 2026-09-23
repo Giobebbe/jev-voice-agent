@@ -47,14 +47,18 @@ class Settings:
     jev_model: str = "jev-latest"
     speak: bool = True
     dry_run: bool = False
+    fast_lane: bool = True  # on-device Whisper partials for closed-vocabulary commands
     # Policy thresholds (tuned by evals/)
     tool_min: float = 0.6
     arg_min: float = 0.5
     early_tool_min: float = 0.9
     early_arg_min: float = 0.85
     delete_arg_min: float = 0.8
-    quiet_ms: int = 350
-    vad_silence_secs: float = 0.7
+    quiet_ms: int = 300
+    scribe_lag_s: float = 0.6  # a Scribe partial covers the audio up to ~this long before it
+    vad_silence_secs: float = 0.5
+    fast_tool_min: float = 0.9
+    fast_arg_min: float = 0.85
     keyterms: list[str] = field(
         default_factory=lambda: ["TextEdit", "Photo Booth", "Folder JEV", "x.com", "Jev", "screenshot"]
     )

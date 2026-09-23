@@ -84,7 +84,7 @@ async def run_case(brain: Brain, settings: Settings, case: dict) -> dict:
         "id": case["id"], "kind": case["kind"], "say": case["say"], "ok": ok, "ms": ms,
         "fired": [d.call() for d in fired],
         "decisions": [{"clause": d.clause, "call": d.call(), "tool_p": round(d.tool_p, 3),
-                       "conf": round(d.confidence(), 3), "finished": round(d.finished, 3),
+                       "conf": round(d.confidence(), 3), "cut_off": round(d.cut_off, 3),
                        "runner_up": d.runner_up} for d in decisions],
         "expect": case["expect"],
     }
@@ -92,11 +92,12 @@ async def run_case(brain: Brain, settings: Settings, case: dict) -> dict:
 
 async def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--cases", default=str(CASES), help="JSONL file (cases.jsonl or heldout.jsonl)")
     ap.add_argument("--only")
     ap.add_argument("--repeat", type=int, default=1)
     ap.add_argument("--concurrency", type=int, default=4)
     args = ap.parse_args()
-    cases = [json.loads(line) for line in CASES.read_text().splitlines() if line.strip()]
+    cases = [json.loads(line) for line in Path(args.cases).read_text().splitlines() if line.strip()]
     if args.only:
         cases = [c for c in cases if c["kind"].startswith(args.only) or c["id"] == args.only]
     settings = Settings()
@@ -133,9 +134,9 @@ async def main() -> int:
         print(f"       fired    {r['fired']}")
         for d in r["decisions"]:
             print(f"       - [{d['clause']}] {d['call']} tool_p={d['tool_p']} conf={d['conf']} "
-                  f"fin={d['finished']} runner={d['runner_up']}")
+                  f"cut={d["cut_off"]} runner={d['runner_up']}")
     RESULTS.mkdir(parents=True, exist_ok=True)
-    out = RESULTS / f"text-{dt.datetime.now():%Y%m%d-%H%M%S}.json"
+    out = RESULTS / f"{Path(args.cases).stem}-{dt.datetime.now():%Y%m%d-%H%M%S}.json"
     out.write_text(json.dumps({"accuracy": ok / n, "n": n, "false_fires": len(false_fires),
                                "p50_ms": statistics.median(lat), "results": results}, indent=1))
     print(f"\nsaved {out}")

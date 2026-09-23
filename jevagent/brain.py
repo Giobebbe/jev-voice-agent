@@ -38,7 +38,7 @@ class Decision:
     tool: str
     tool_p: float
     args: dict[str, Arg] = field(default_factory=dict)
-    finished: float = 0.0
+    cut_off: float = 0.0
     latency_ms: float = 0.0
     runner_up: tuple[str, float] = ("", 0.0)
 
@@ -162,10 +162,10 @@ class Brain:
                 "instructions": TOOL_QUESTION,
                 "criteria": {name: t.description for name, t in TOOLS.items()},
             },
-            "finished": {
+            "cut_off": {
                 "type": "noul",
-                "instructions": "Could the user stop talking right after `command` and the request would "
-                                "make complete sense?",
+                "instructions": "Is the last phrase of `command` unfinished, so that more words are clearly "
+                                "still missing at the end?",
             },
             "app": {
                 "type": "choice",
@@ -206,18 +206,27 @@ class Brain:
         context = context or {}
         items = items or []
         folders = folders or []
-        key = ("decide", clause.lower(), json.dumps(context, sort_keys=True), tuple(items), tuple(folders))
-        if key in self._cache:
-            d = self._cache[key]
-            return Decision(**{**d.__dict__, "latency_ms": 0.0})
+        key = ("decide", T.key(clause), json.dumps(context, sort_keys=True), tuple(items), tuple(folders))
+        hit = self._cache.get(key)
+        if isinstance(hit, Decision):
+            return Decision(**{**hit.__dict__, "clause": clause, "latency_ms": 0.0})
+        if hit is None:  # first asker starts the request, later askers share it
+            hit = asyncio.ensure_future(self._decide_uncached(clause, context, items, folders))
+            self._cache[key] = hit
+        try:
+            d = await asyncio.shield(hit)
+        except Exception:
+            self._cache.pop(key, None)
+            raise
+        self._cache[key] = d
+        return Decision(**{**d.__dict__, "clause": clause})
+
+    async def _decide_uncached(self, clause: str, context: dict, items: list[str], folders: list[str]) -> Decision:
         state = {"command": clause, "context": context}
         if items:
             state["files"] = items
-        questions = self.questions_for(clause, items, folders)
-        answers, ms = await self.ask(state, questions)
-        d = self._decode(clause, answers, ms)
-        self._cache[key] = d
-        return d
+        answers, ms = await self.ask(state, self.questions_for(clause, items, folders))
+        return self._decode(clause, answers, ms)
 
     def _decode(self, clause: str, answers: dict, ms: float) -> Decision:
         tool_a = answers["tool"]
@@ -235,9 +244,19 @@ class Brain:
             absent = choice in (ABSENT, NOT_INSTALLED)
             args[name] = Arg(None if absent else choice, p, omitted=absent)
         return Decision(clause=clause, tool=tool, tool_p=tool_p, args=args,
-                        finished=answers["finished"]["noul"], latency_ms=ms, runner_up=runner)
+                        cut_off=answers["cut_off"]["noul"], latency_ms=ms, runner_up=runner)
 
     async def decide_segment(self, segment: str, context: dict | None = None,
                              items: list[str] | None = None, folders: list[str] | None = None) -> list[Decision]:
-        cl = await self.clauses(segment)
-        return list(await asyncio.gather(*(self.decide(c, context, items, folders) for c in cl)))
+        # Speculative: while Jev decides where to split, it already decides every piece the
+        # split could produce, so the answer is ready when the split comes back.
+        spec = set()
+        for s in T.sentences(segment):
+            spec.update(T.all_pieces(s, T.boundaries(s)))
+        pre = [asyncio.ensure_future(self.decide(p, context, items, folders)) for p in spec]
+        try:
+            cl = await self.clauses(segment)
+            return list(await asyncio.gather(*(self.decide(c, context, items, folders) for c in cl)))
+        finally:
+            for f in pre:
+                f.add_done_callback(lambda f: f.exception() if not f.cancelled() else None)

@@ -77,6 +77,24 @@ def split_at(sentence: str, cuts: list[Boundary]) -> list[str]:
     return pieces
 
 
+def key(text: str) -> str:
+    """Cache key: the same words with different punctuation or case are the same clause."""
+    return " ".join(w.lower().strip(_EDGE_PUNCT) for w in text.split() if w.strip(_EDGE_PUNCT))
+
+
+def all_pieces(sentence: str, bs: list[Boundary], max_boundaries: int = 3) -> list[str]:
+    """Every clause any split of the sentence could produce (contiguous runs between boundaries)."""
+    bs = sorted(bs, key=lambda b: b.index)[:max_boundaries]
+    out: list[str] = []
+    for i in range(len(bs) + 1):
+        for j in range(i, len(bs) + 1):
+            keep = [b for k, b in enumerate(bs) if k < i or k >= j]
+            pieces = split_at(sentence, keep)
+            # the run i..j is the piece that starts at boundary i (or the start)
+            out.append(pieces[i] if i < len(pieces) else pieces[-1])
+    return list(dict.fromkeys(p for p in out if p))
+
+
 def words(text: str) -> list[tuple[int, int]]:
     return [(m.start(), m.end()) for m in _WORD.finditer(text)]
 
