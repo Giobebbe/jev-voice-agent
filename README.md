@@ -62,7 +62,7 @@ served on 127.0.0.1 only, checks the Host header and needs a random per-run key.
 | Audio: 4 spoken scenarios, 4 voices, real Scribe + fast lane | **27/27 actions, 0 false fires** |
 | Open-app/site before the sentence ends | 5 of 8, median 0.5 s early |
 | All actions vs end of speech | median +0.7 s |
-| Live, real actions, `Folder JEV` and `Folder JEV copy` | **14/14 actions, 11/11 side-effect checks** |
+| Live, real actions, `Folder JEV` and `Folder JEV copy` | **14/14 actions, 11/11 side-effect checks** (before the final security fixes; those are covered by unit tests and the audio eval, which runs file actions for real) |
 | Idle room, 60 s of real microphone | 0 transcripts, 0 actions |
 
 ## Run it
@@ -87,7 +87,7 @@ Say "goodbye" or press Ctrl+C to stop. Every run writes a timeline to `runs/`.
 ## Evals
 
 ```bash
-python -m pytest                                      # sandbox + text helpers
+python -m pytest                                      # sandbox, notes server, executor, text
 python evals/text_eval.py [--cases evals/heldout2.jsonl]
 python evals/audio_eval.py                            # ElevenLabs voices -> Scribe -> agent
 scripts/in_terminal.sh python evals/live_eval.py      # real actions + side-effect checks
@@ -108,6 +108,6 @@ MIT, see LICENSE.
 jevagent/  brain.py (Jev)  agent.py (policy)  audio.py (Scribe, TTS, mic)  fastear.py
            executor.py  sandbox.py  notes_app.py  spec.py (tools)  text.py  __main__.py
 evals/     cases.jsonl  heldout.jsonl  heldout2.jsonl  scenarios.json  *_eval.py
-tests/     test_sandbox.py  test_text.py
+tests/     test_sandbox.py  test_text.py  test_notes_app.py  test_executor_notes.py
 docs/      PLAN.md  reference-video.md  VIDEO.md
 ```
