@@ -8,11 +8,13 @@ no AppleScript is involved and the user's own Apple Notes never appear on screen
 from __future__ import annotations
 
 import json
+import secrets
 import subprocess
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 PORT = 8765
 
@@ -45,7 +47,7 @@ pre{font:inherit;font-size:18px;white-space:pre-wrap;margin:0}
 let last="";
 async function tick(){
   try{
-    const r=await fetch("/api/state",{cache:"no-store"});const s=await r.json();
+    const r=await fetch("/api/state?k="+encodeURIComponent(new URLSearchParams(location.search).get("k")||""),{cache:"no-store"});const s=await r.json();
     if(s.close){window.close();return}
     const sig=JSON.stringify(s);if(sig===last)return;last=sig;
     document.getElementById("list").innerHTML=s.notes.map(n=>
@@ -62,10 +64,14 @@ setInterval(tick,250);tick();
 
 
 class NotesApp:
-    def __init__(self, notes_dir: Path, browser: str = "Google Chrome", port: int = PORT):
-        self.dir = notes_dir
+    """Local-only: binds 127.0.0.1, accepts only a localhost Host header (no DNS rebinding)
+    and a per-run random key, and reads notes through the Sandbox."""
+
+    def __init__(self, sandbox, browser: str = "Google Chrome", port: int = PORT):
+        self.sb = sandbox
         self.browser = browser
         self.port = port
+        self.key = secrets.token_urlsafe(16)
         self.current: Path | None = None
         self.last_seen = 0.0
         self.close_requested = False
@@ -82,13 +88,23 @@ class NotesApp:
                 pass
 
             def do_GET(self):
-                if self.path.startswith("/api/state"):
+                host = (self.headers.get("Host") or "").lower()
+                if host not in (f"127.0.0.1:{app.port}", f"localhost:{app.port}"):
+                    self.send_response(403)
+                    self.end_headers()
+                    return
+                url = urlparse(self.path)
+                if parse_qs(url.query).get("k", [""])[0] != app.key:
+                    self.send_response(403)
+                    self.end_headers()
+                    return
+                if url.path == "/api/state":
                     app.last_seen = time.monotonic()
                     body = json.dumps(app.state()).encode()
                     if app.close_requested:
                         app.close_requested = False
                     ctype = "application/json"
-                elif self.path in ("/", "/index.html"):
+                elif url.path in ("/", "/index.html"):
                     body, ctype = PAGE.encode(), "text/html; charset=utf-8"
                 else:
                     self.send_response(404)
@@ -108,10 +124,20 @@ class NotesApp:
             self._server.shutdown()
             self._server = None
 
+    def _notes_dir(self) -> Path | None:
+        try:
+            d = self.sb.path("Notes")
+        except Exception:
+            return None
+        return d if d.is_dir() else None
+
     def state(self) -> dict:
         notes = []
-        if self.dir.exists():
-            for p in sorted(self.dir.glob("*.txt"), key=lambda p: -p.stat().st_mtime):
+        d = self._notes_dir()
+        if d is not None:
+            for p in sorted(d.glob("*.txt"), key=lambda p: -p.stat().st_mtime):
+                if p.is_symlink():
+                    continue
                 try:
                     first = p.read_text(encoding="utf-8").split("\n")[0].strip()
                 except OSError:
@@ -136,7 +162,7 @@ class NotesApp:
             # already on screen: bring Chrome forward
             subprocess.run(["open", "-a", self.browser], capture_output=True)
             return
-        subprocess.run(["open", "-na", self.browser, "--args", f"--app=http://127.0.0.1:{self.port}/",
+        subprocess.run(["open", "-na", self.browser, "--args", f"--app=http://127.0.0.1:{self.port}/?k={self.key}",
                         "--window-size=900,640"], capture_output=True)
 
     def hide(self) -> None:
@@ -146,11 +172,11 @@ class NotesApp:
 _APP: NotesApp | None = None
 
 
-def notes_app(notes_dir: Path, browser: str = "Google Chrome") -> NotesApp:
+def notes_app(sandbox, browser: str = "Google Chrome") -> NotesApp:
     """One notes window and one local server per process."""
     global _APP
     if _APP is None:
-        _APP = NotesApp(notes_dir, browser)
+        _APP = NotesApp(sandbox, browser)
     else:
-        _APP.dir, _APP.browser = notes_dir, browser
+        _APP.sb, _APP.browser = sandbox, browser
     return _APP

@@ -18,6 +18,13 @@ class SandboxError(Exception):
 
 
 _BAD_CHARS = re.compile(r"[/\\:\x00-\x1f]")
+_EXT = re.compile(r"\.[A-Za-z0-9]{1,5}$")
+TRASH = ".trash"  # deletes move here: recoverable, and still inside the root
+
+
+def has_ext(name: str) -> bool:
+    """'notes.md' has an extension, 'Call Dr. Smith' and 'Version 2.0 plan' do not."""
+    return bool(_EXT.search(name))
 
 
 def clean_name(name: str, max_len: int = 80) -> str:
@@ -114,7 +121,7 @@ class Sandbox:
 
     def create_file(self, name: str, text: str = "", parent_rel: str = "", default_suffix: str = ".txt") -> Path:
         name = clean_name(name)
-        if not Path(name).suffix:
+        if not has_ext(name):
             name += default_suffix
         parent = self.path(parent_rel, allow_root=True) if parent_rel else self.root
         target = self.unique(parent, name)
@@ -128,21 +135,32 @@ class Sandbox:
         return target
 
     def delete(self, rel: str) -> Path:
+        """Move to <root>/.trash (hidden from listings); nothing is erased for good."""
         target = self.path(rel.rstrip("/"))
         if not target.exists():
             raise SandboxError(f"not found: {rel}")
+        if target.name == TRASH:
+            raise SandboxError("the trash cannot be deleted")
+        trash = self.path(TRASH)  # rejects a planted .trash symlink
+        trash.mkdir(exist_ok=True)
+        dst = self.unique(trash, target.name)
+        shutil.move(str(target), str(dst))
+        return target
+
+    def purge(self, rel: str) -> None:
+        """Erase for good (evals clean up after themselves with this)."""
+        target = self.path(rel.rstrip("/"))
         if target.is_dir():
             shutil.rmtree(target)
-        else:
+        elif target.exists():
             target.unlink()
-        return target
 
     def rename(self, rel: str, new_name: str) -> Path:
         src = self.path(rel.rstrip("/"))
         if not src.exists():
             raise SandboxError(f"not found: {rel}")
         new_name = clean_name(new_name)
-        if src.is_file() and not Path(new_name).suffix:
+        if src.is_file() and not has_ext(new_name):
             new_name += src.suffix
         dst = self.unique(src.parent, new_name)
         self.path(self.rel(dst))

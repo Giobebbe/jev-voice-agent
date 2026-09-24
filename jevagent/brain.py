@@ -219,6 +219,8 @@ class Brain:
         if isinstance(hit, Decision):
             return Decision(**{**hit.__dict__, "clause": clause, "latency_ms": 0.0})
         if hit is None:  # first asker starts the request, later askers share it
+            if len(self._cache) > 4000:  # long sessions: drop settled answers, keep in-flight ones
+                self._cache = {k: v for k, v in self._cache.items() if isinstance(v, asyncio.Future)}
             hit = asyncio.ensure_future(self._decide_uncached(clause, context, items, folders))
             self._cache[key] = hit
         try:

@@ -86,7 +86,10 @@ class Agent:
         self._done: dict[tuple[int, int], tuple] = {}
         self._fired_keys: list[tuple[float, tuple]] = []
         self._seen: dict[tuple[int, int], tuple] = {}  # last decision key per clause (stability)
-        self._carry: tuple[str, float, Decision] | None = None  # (text, deadline, decision)
+        self._carry: tuple[str, int, Decision] | None = None  # (text, next segment, decision)
+        self._carry_until = 0.0  # ask only if nothing was said by then
+        self._seg_start: dict[int, float] = {}  # first partial of each Scribe segment
+        self._fast_fired: list[tuple[float, tuple]] = []
         self._actions: asyncio.Queue = asyncio.Queue()
         self.fast: FastEar | None = None
         self._fast: tuple[int, str, bool] | None = None
@@ -112,6 +115,7 @@ class Agent:
         if text and text != self._text:
             self._text = text
             self._partial_at = time.monotonic()
+            self._seg_start.setdefault(self._seg, self._partial_at)
             self.log("partial", seg=self._seg, text=text)
             self.ui("partial", text)
             self._wake.set()
@@ -137,7 +141,10 @@ class Agent:
     # -- policy ------------------------------------------------------------------------
     def should_fire(self, seg: int, idx: int, d: Decision, closed: bool, final: bool) -> str:
         """'fire', 'carry' (wait for the next segment) or '' (wait)."""
-        if d.tool == NONE or d.addressed < ADDRESSED:
+        if d.tool == NONE:
+            return ""
+        # "Goodbye" is not an instruction, but it is meant for the agent; stopping is harmless.
+        if d.addressed < ADDRESSED and d.tool != "stop_listening":
             return ""
         spec = d.spec
         if d.missing() or d.cut_off >= CUT_OFF:
@@ -168,14 +175,15 @@ class Agent:
         return any(s == seg and k == key for (s, _), k in self._done.items())
 
     # -- worker ------------------------------------------------------------------------
-    def _with_carry(self, text: str) -> str:
-        if self._carry and time.monotonic() <= self._carry[1]:
+    def _with_carry(self, seg: int, text: str) -> str:
+        """The unfinished tail of segment N belongs to segment N+1, however long the pause."""
+        if self._carry and seg == self._carry[1]:
             return self._carry[0] + " " + text
         return text
 
     async def evaluate(self, seg: int, text: str, final: bool, quiet: bool) -> None:
         t0 = time.monotonic()
-        full = self._with_carry(text)
+        full = self._with_carry(seg, text)
         try:
             decisions = await self.brain.decide_segment(
                 full, self.ex.desk.context(), self.ex.items(), self.ex.folders())
@@ -197,11 +205,12 @@ class Agent:
                 continue
             if verdict == "carry":
                 if idx == n - 1:  # only the tail of a segment can continue in the next one
-                    self._carry = (d.clause, time.monotonic() + CARRY_S, d)
+                    self._carry = (d.clause, seg + 1, d)
+                    self._carry_until = time.monotonic() + CARRY_S
                     self.log("carry", seg=seg, idx=idx, clause=d.clause, call=d.call())
                     self.ui("ask", f"waiting for the rest of: {d.clause!r}")
                 continue
-            if self._same_seg_key(seg, d.key()) or self._duplicate(d.key()):
+            if self._same_seg_key(seg, d.key()) or self._duplicate(d.key()) or self._fast_did(seg, d.key()):
                 self._done[(seg, idx)] = d.key()
                 continue
             self._done[(seg, idx)] = d.key()
@@ -236,10 +245,13 @@ class Agent:
             self._seen[(seg, idx)] = d.key()
             if verdict != "fire" or (seg, idx) in self._done:
                 continue
+            same_utt = any(s == seg and k == d.key() for (s, _), k in self._done.items())
             self._done[(seg, idx)] = d.key()
-            if self._duplicate(d.key()):
+            if same_utt or self._duplicate(d.key()):
                 continue
-            self._fired_keys.append((time.monotonic(), d.key()))
+            now = time.monotonic()
+            self._fired_keys.append((now, d.key()))
+            self._fast_fired = [(t, k) for t, k in self._fast_fired if now - t < 30] + [(now, d.key())]
             mode = "fast" if complete else "FAST-EARLY"
             self.log("fire", seg=str(seg), idx=idx, call=d.call(), final=False, quiet=complete, lane="fast",
                      clause=d.clause, conf=d.confidence())
@@ -247,8 +259,14 @@ class Agent:
                             f"+{(time.monotonic() - t0) * 1000:.0f}ms")
             await self._actions.put(d)
 
+    def _fast_did(self, seg: int, key: tuple) -> bool:
+        """The fast lane already ran this during the same stretch of speech."""
+        start = self._seg_start.get(seg, time.monotonic()) - 1.0
+        return any(k == key and t >= start for t, k in self._fast_fired)
+
     async def _expire_carry(self) -> None:
-        if not self._carry or time.monotonic() <= self._carry[1] or self.meter.talking or self._text:
+        if (not self._carry or time.monotonic() <= self._carry_until or self.meter.talking
+                or self._text or self._seg >= self._carry[1] + 1):
             return
         clause, _, d = self._carry
         self._carry = None

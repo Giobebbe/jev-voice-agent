@@ -111,6 +111,7 @@ async def run_scenario(sc: dict, voices: dict, root: Path) -> dict:
     pcm, utts = build(sc, voices, speaker)
     sandbox = Sandbox(root)
     before = set(sandbox.listing(depth=3))
+    trash_existed = (sandbox.root / ".trash").exists()
     brain = Brain(s)
     await brain.warm()
     ex = EvalExecutor(s, sandbox)
@@ -120,10 +121,12 @@ async def run_scenario(sc: dict, voices: dict, root: Path) -> dict:
     await brain.close()
     # remove only what this eval created
     created = sorted(set(sandbox.listing(depth=3)) - before, key=len)
+    if (sandbox.root / ".trash").exists() and not trash_existed:
+        created.append(".trash/")
     for rel in created:
         try:
             if (sandbox.root / rel.rstrip("/")).exists():
-                sandbox.delete(rel)
+                sandbox.purge(rel)
         except Exception:
             pass
     fires = []

@@ -16,7 +16,7 @@ from pathlib import Path
 from .brain import Decision
 from .config import PROTECTED_APPS, Settings
 from .notes_app import notes_app
-from .sandbox import Sandbox, SandboxError
+from .sandbox import Sandbox, SandboxError, clean_name
 
 FFMPEG = "/opt/homebrew/bin/ffmpeg"
 NOTES_APP = "Jev Notes"
@@ -69,7 +69,7 @@ class Executor:
         self.s = settings
         self.sb = sandbox
         self.desk = DeskState()
-        self.notes = notes_app(sandbox.root / "Notes", settings.browser)
+        self.notes = notes_app(sandbox, settings.browser)
         self.log: list[tuple[str, str]] = []  # (call, outcome) -- what evals read
 
     def items(self) -> list[str]:
@@ -157,7 +157,8 @@ class Executor:
     def do_create_note(self, d: Decision) -> Result:
         title = d.args["title"].value if not d.args["title"].omitted else ""
         self.sb.ensure_dir("Notes")
-        path = self.sb.create_file(title or "Untitled", text=(title + "\n\n") if title else "", parent_rel="Notes")
+        path = self.sb.create_file((title or "Untitled") + ".txt", text=(title + "\n\n") if title else "",
+                                   parent_rel="Notes")
         self._show_note(path)
         return Result(True, detail=self.desk.current_note)
 
@@ -171,8 +172,8 @@ class Executor:
         lines = old.split("\n")
         has_title = not path.stem.startswith("Untitled") and bool(lines[0].strip())
         body = ("\n".join(lines[1:]) if has_title else old).strip("\n")
-        self.sb.write_file(self.sb.rel(path), title + "\n\n" + (body + "\n" if body else ""))
-        new = self.sb.rename(self.sb.rel(path), title)
+        new = self.sb.rename(self.sb.rel(path), clean_name(title) + ".txt")  # validate before writing
+        self.sb.write_file(self.sb.rel(new), title + "\n\n" + (body + "\n" if body else ""))
         self._show_note(new)
         return Result(True, detail=self.desk.current_note)
 
@@ -183,7 +184,9 @@ class Executor:
             self.sb.ensure_dir("Notes")
             path = self.sb.create_file("Untitled", parent_rel="Notes")
         content = path.read_text(encoding="utf-8")
-        content = (content.rstrip("\n") + "\n" + text + "\n") if content.strip() else text + "\n"
+        head = content.rstrip("\n")
+        sep = "\n\n" if head and "\n" not in head else "\n"  # blank line after a bare title
+        content = (head + sep + text + "\n") if head else text + "\n"
         self.sb.write_file(self.sb.rel(path), content)
         self._show_note(path)
         return Result(True, detail=self.desk.current_note)
@@ -257,19 +260,27 @@ class Executor:
         p = self.sb.delete(rel)
         if self.desk.current_note and self.sb.root / self.desk.current_note == p:
             self.desk.current_note = ""
-        return Result(True, f"Deleted {p.name}.", rel)
+        return Result(True, f"Moved {p.name} to the trash.", rel)
 
     def do_rename_item(self, d: Decision) -> Result:
         rel = d.args["item"].value
         p = self.sb.rename(rel, d.args["name"].value)
-        if self.desk.current_note == rel:
-            self.desk.current_note = self.sb.rel(p)
+        self._follow(rel, p)
         return Result(True, detail=f"{rel} -> {self.sb.rel(p)}")
 
     def do_move_item(self, d: Decision) -> Result:
         rel, dest = d.args["item"].value, d.args["dest"].value
         p = self.sb.move(rel, dest)
+        self._follow(rel, p)
         return Result(True, detail=f"{rel} -> {self.sb.rel(p)}")
+
+    def _follow(self, old_rel: str, new: Path) -> None:
+        """Keep the current note pointing at it after its file or a parent folder moved."""
+        old = old_rel.rstrip("/")
+        cur = self.desk.current_note
+        if cur and (cur == old or cur.startswith(old + "/")):
+            self.desk.current_note = self.sb.rel(new) + cur[len(old):]
+            self.notes.current = self.sb.root / self.desk.current_note
 
     def do_open_item(self, d: Decision) -> Result:
         p = self.sb.path(d.args["item"].value.rstrip("/"))

@@ -16,5 +16,6 @@ JOB="$PROJECT/runs/job-$STAMP.sh"
   echo "${(j: :)${(q)@}} > ${(q)LOG} 2>&1"
   echo "echo __DONE__ \$? >> ${(q)LOG}"
 } > "$JOB"
-osascript -e "tell application \"Terminal\" to do script \"zsh '$JOB'\"" > /dev/null
+osascript -e 'on run argv' -e 'tell application "Terminal" to do script "zsh " & quoted form of item 1 of argv' \
+  -e 'end run' "$JOB" > /dev/null
 echo "$LOG"

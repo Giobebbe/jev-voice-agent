@@ -147,6 +147,7 @@ async def main() -> int:
     spec = json.loads(SCEN.read_text())
     by_id = {x["id"]: x for x in spec["scenarios"]}
     before_files = set(sandbox.listing(depth=3))
+    trash_existed = (sandbox.root / ".trash").exists()
     before_apps = {a: running(a) for a in ("Photo Booth", "Preview", "Calculator")}
     before_tabs = chrome_urls()
     checks, report = [], {"root": str(sandbox.root), "loopback": args.loopback, "scenarios": []}
@@ -199,8 +200,9 @@ async def main() -> int:
         print(f"  {'✓' if r['ok'] else '✗'} {r.get('call', r['expect'])} {r.get('vs_end_ms', 0):+.0f}ms")
     report["scenarios"].append({"id": "files", "rows": rows, "false_fires": ff, "exec": ex.log})
     checks.append(check("file actions all succeeded", all(o == "ok" for _, o in ex.log), str(ex.log)))
-    checks.append(check("Project folder created then deleted",
-                        not any(p.name.startswith("Project") for p in sandbox.root.iterdir())))
+    checks.append(check("Project folder created then moved to the sandbox trash",
+                        not any(p.name.startswith("Project") for p in sandbox.root.iterdir())
+                        and any(p.name.startswith("Project") for p in (sandbox.root / ".trash").iterdir())))
 
     all_rows = [r for sc in report["scenarios"] for r in sc["rows"]]
     n_ok = sum(r["ok"] for r in all_rows)
@@ -211,12 +213,14 @@ async def main() -> int:
 
     if not args.keep:
         created = sorted(set(sandbox.listing(depth=3)) - before_files, key=lambda r: -r.count("/"))
+        if (sandbox.root / ".trash").exists() and not trash_existed:
+            created.append(".trash/")
         ex.notes.hide()
         time.sleep(0.6)
         for rel in created:
             try:
                 if (sandbox.root / rel.rstrip("/")).exists():
-                    sandbox.delete(rel)
+                    sandbox.purge(rel)
             except Exception:
                 pass
         for app, was in before_apps.items():

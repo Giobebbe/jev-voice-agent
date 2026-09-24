@@ -75,7 +75,8 @@ def test_create_rename_move_delete_stay_inside(sb):
     renamed = sb.rename("Projects/hello.txt", "../../evil")
     assert renamed.parent == f and renamed.name == "evil.txt"
     sb.delete("Projects/")
-    assert list(sb.root.iterdir()) == []
+    assert sb.listing() == []  # gone from view...
+    assert (sb.root / ".trash" / "Projects" / "evil.txt").exists()  # ...but recoverable, inside the root
 
 
 def test_unique_names_do_not_overwrite(sb):
@@ -95,3 +96,26 @@ def test_listing_hides_dotfiles(sb):
     (sb.root / ".DS_Store").write_text("")
     sb.create_folder("Photos")
     assert sb.listing() == ["Photos/"]
+
+
+def test_trash_symlink_rejected(sb, tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (sb.root / ".trash").symlink_to(outside)
+    sb.create_file("x")
+    with pytest.raises(SandboxError):
+        sb.delete("x.txt")
+    assert list(outside.iterdir()) == []
+
+
+def test_dotted_names_are_not_extensions(sb):
+    assert sb.create_file("Call Dr. Smith").name == "Call Dr. Smith.txt"
+    assert sb.create_file("Version 2.0 plan").name == "Version 2.0 plan.txt"
+    assert sb.create_file("readme.md").name == "readme.md"
+
+
+def test_purge_stays_inside(sb):
+    sb.create_folder("A")
+    sb.purge("A/")
+    with pytest.raises(SandboxError):
+        sb.purge("../x")

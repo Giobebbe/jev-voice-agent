@@ -30,10 +30,12 @@ Google and YouTube search · open websites · close the tab · take a photo · t
 screenshot · create, rename, move, open, delete files and folders · list the folder ·
 volume · dark mode · tell the time · stop
 
+Deletes move items to a hidden `.trash/` inside the root, so nothing is erased for good.
 Every create, rename, move and delete is confined to `~/Desktop/Folder JEV` or
 `~/Desktop/Folder JEV copy` (the only allowed roots), enforced in `jevagent/sandbox.py`
 and unit-tested against traversal and symlink escapes. Notes and photos are files in the
-root. The agent never quits Terminal, VS Code, Claude, OBS or Finder.
+root. The agent never quits Terminal, VS Code, Claude, OBS or Finder. The Jev Notes page is
+served on 127.0.0.1 only, checks the Host header and needs a random per-run key.
 
 ## Why it is fast
 
@@ -59,7 +61,7 @@ root. The agent never quits Terminal, VS Code, Claude, OBS or Finder.
 | Text, held-out set 2 (80, untouched, run once) | **98.8%**, 0 false actions |
 | Audio: 4 spoken scenarios, 4 voices, real Scribe + fast lane | **27/27 actions, 0 false fires** |
 | Open-app/site before the sentence ends | 5 of 8, median 0.5 s early |
-| All actions vs end of speech | median +0.6 s |
+| All actions vs end of speech | median +0.7 s |
 | Live, real actions, `Folder JEV` and `Folder JEV copy` | **14/14 actions, 11/11 side-effect checks** |
 | Idle room, 60 s of real microphone | 0 transcripts, 0 actions |
 
@@ -95,6 +97,10 @@ Known limit: `live_eval.py --loopback` (speakers into the built-in mic) only hea
 first seconds, because the MacBook's echo cancellation learns and removes its own speaker
 output. A human voice is not affected, and the same property keeps the agent from
 hearing its own replies.
+
+## License
+
+MIT, see LICENSE.
 
 ## Layout
 
